@@ -18,11 +18,12 @@ func newBodyElement() *BodyElement {
 }
 
 var (
-	snake = []*BodyElement{}
+	head = newBodyElement()
+	body = []*BodyElement{}
 )
 
 func init() {
-	snake = append(snake, newBodyElement())
+	body = append(body, newBodyElement())
 }
 
 type Game struct{
@@ -30,16 +31,16 @@ type Game struct{
 }
 
 func (g *Game) Update() error {
-	for e := range snake {
-		snake[e].ops.GeoM.Translate(1, 0)
-	}
+	head.ops.GeoM.Translate(1, 0)
+	
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(color.NRGBA{0x00, 0x80, 0x80, 0xff})
-	for e := range snake {
-		screen.DrawImage(snake[e].rect, snake[e].ops)
+	screen.DrawImage(head.rect, head.ops)
+	for e := range body {
+		screen.DrawImage(body[e].rect, body[e].ops)
 	}
 	
 }
