@@ -1,48 +1,80 @@
 package main
 
 import (
+	"github.com/hajimehoshi/ebiten/v2"
 	"image/color"
 	"log"
-	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type BodyElement struct {
+	x, y int
+	dir  direction
 	rect *ebiten.Image
-	ops *ebiten.DrawImageOptions
+	ops  *ebiten.DrawImageOptions
+	tail *BodyElement
 }
 
-func newBodyElement() *BodyElement {
-	newElement := &BodyElement{ops: &ebiten.DrawImageOptions{}, rect: ebiten.NewImage(10, 10)}
-	newElement.rect.Fill(color.Gray16{})
+func (e *BodyElement) getEndOfTail() *BodyElement {
+	if e.tail == nil {
+		return e
+	}
+	return e.tail.getEndOfTail()
+}
+
+func (e *BodyElement) move() {
+	
+}
+
+func newBodyElement(startX, startY int) *BodyElement {
+	newElement := &BodyElement{x: startX, y: startY, dir: East, ops: &ebiten.DrawImageOptions{}, rect: ebiten.NewImage(8, 8)}
+	newElement.rect.Fill(color.RGBA{255, 0, 255, 255})
 	return newElement
 }
 
 var (
-	head = newBodyElement()
-	body = []*BodyElement{}
+	head *BodyElement
+	grow int
 )
 
 func init() {
-	body = append(body, newBodyElement())
+	head = newBodyElement(10, 10)
+	
 }
 
-type Game struct{
-	
+func getNewDirection(currentDir direction) direction {
+	if ebiten.IsKeyPressed(ebiten.KeyUp) {
+		return North
+	} else if ebiten.IsKeyPressed(ebiten.KeyDown) {
+		return South
+	} else if ebiten.IsKeyPressed(ebiten.KeyLeft) {
+		return West
+	} else if ebiten.IsKeyPressed(ebiten.KeyRight) {
+		return East
+	} else if ebiten.IsKeyPressed(ebiten.KeySpace) {
+		grow++
+	}
+	return currentDir
+}
+
+type Game struct {
 }
 
 func (g *Game) Update() error {
-	head.ops.GeoM.Translate(1, 0)
-	
+	if grow > 0 {
+		grow--
+		tail := head.getEndOfTail()
+		tail.tail = newBodyElement(tail.x, tail.y)
+	}
+	head.dir = getNewDirection(head.dir)
+	head.ops.GeoM.Reset()
+	head.x += head.dir.varX
+	head.y += head.dir.varY
+	head.ops.GeoM.Translate(float64(head.x), float64(head.y))
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	screen.Fill(color.NRGBA{0x00, 0x80, 0x80, 0xff})
 	screen.DrawImage(head.rect, head.ops)
-	for e := range body {
-		screen.DrawImage(body[e].rect, body[e].ops)
-	}
-	
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
