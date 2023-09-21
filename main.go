@@ -11,23 +11,31 @@ import (
 
 var (
 	snake    *Snake
-	grow     int = 100
-	tile     *ebiten.Image
-	img      *ebiten.Image
+	food    *Food
+	grow     int = 40
+	tileImg     *ebiten.Image
+	foodImg	 *ebiten.Image
+	snakeImg      *ebiten.Image
 	ops      = &ebiten.DrawImageOptions{}
 	dirQueue DirectionQueue
 )
 
 const (
 	elementSize = 5
+	screenWidth  = 320
+	screenHeight = 240
 )
 
 func init() {
+	setRandomSource(0)
 	snake = newSnake()
-	img = ebiten.NewImage(elementSize, elementSize)
-	img.Fill(color.White)
-	tile = ebiten.NewImage(elementSize-1, elementSize-1)
-	tile.Fill(color.RGBA{120, 120, 120, 12})
+	food = newFood()
+	snakeImg = ebiten.NewImage(elementSize, elementSize)
+	snakeImg.Fill(color.White)
+	tileImg = ebiten.NewImage(elementSize, elementSize)
+	tileImg.Fill(color.RGBA{120, 120, 120, 12})
+	foodImg = ebiten.NewImage(elementSize, elementSize)
+	foodImg.Fill(color.RGBA{255, 0, 0, 255})
 }
 
 func checkKeys() {
@@ -75,28 +83,37 @@ func (g *Game) Update() error {
 		}
 	}
 
+	if snake.head.p.x == food.p.x && snake.head.p.y == food.p.y {
+		food = newFood()
+		grow += 10
+	}
+
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	/*for x := 0; x < 32; x++ {
+	for x := 0; x < 32; x++ {
 		for y := 0; y < 24; y++ {
 			ops.GeoM.Reset()
 			ops.GeoM.Translate(float64(x*elementSize), float64(y*elementSize))
-			screen.DrawImage(tile, ops)
+			screen.DrawImage(tileImg, ops)
 		}
-	}*/
+	}
 
 	for _, e := range snake.head.getAllBodyElements() {
 		ops.GeoM.Reset()
 		ops.GeoM.Translate(float64(e.p.x), float64(e.p.y))
-		screen.DrawImage(img, ops)
+		screen.DrawImage(snakeImg, ops)
 	}
+
+	ops.GeoM.Reset()
+	ops.GeoM.Translate(float64(food.p.x), float64(food.p.y))
+	screen.DrawImage(foodImg, ops)
 
 }
 
-func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return 320, 240
+func (g *Game) Layout(outsideWidth, outsideHeight int) (sw, sh int) {
+	return screenWidth, screenHeight
 }
 
 func main() {
