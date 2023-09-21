@@ -18,11 +18,8 @@ func (p Point) move(dir Direction) Point {
 func getRandomPoint() *Point {
 	x := randomNumber(screenWidth)
 	y := randomNumber(screenHeight)
-
-	restX := x % elementSize
-	restY := y % elementSize
-	x = x - restX
-	y = y - restY
+	x = x - (x % elementSize)
+	y = y - (y % elementSize)
 
 	return newPoint(x, y)
 }

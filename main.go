@@ -11,17 +11,17 @@ import (
 
 var (
 	snake    *Snake
-	food    *Food
+	food     *Food
 	grow     int = 40
-	tileImg     *ebiten.Image
-	foodImg	 *ebiten.Image
-	snakeImg      *ebiten.Image
+	tileImg  *ebiten.Image
+	foodImg  *ebiten.Image
+	snakeImg *ebiten.Image
 	ops      = &ebiten.DrawImageOptions{}
 	dirQueue DirectionQueue
 )
 
 const (
-	elementSize = 5
+	elementSize  = 5
 	screenWidth  = 320
 	screenHeight = 240
 )
@@ -31,7 +31,7 @@ func init() {
 	snake = newSnake()
 	food = newFood()
 	snakeImg = ebiten.NewImage(elementSize, elementSize)
-	snakeImg.Fill(color.White)
+	snakeImg.Fill(color.RGBA{255, 255, 255, 255})
 	tileImg = ebiten.NewImage(elementSize, elementSize)
 	tileImg.Fill(color.RGBA{120, 120, 120, 12})
 	foodImg = ebiten.NewImage(elementSize, elementSize)
@@ -55,7 +55,7 @@ func checkKeys() {
 		dirQueue.push(East)
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
-		grow+=10
+		grow += 10
 	}
 }
 
@@ -92,13 +92,6 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	for x := 0; x < 32; x++ {
-		for y := 0; y < 24; y++ {
-			ops.GeoM.Reset()
-			ops.GeoM.Translate(float64(x*elementSize), float64(y*elementSize))
-			screen.DrawImage(tileImg, ops)
-		}
-	}
 
 	for _, e := range snake.head.getAllBodyElements() {
 		ops.GeoM.Reset()
