@@ -10,6 +10,14 @@ type BodyElement struct {
 	tail *BodyElement
 }
 
+func (e BodyElement) getAllBodyElements() []*BodyElement {
+	elements := []*BodyElement{&e}
+	if e.tail != nil {
+		elements = append(elements, e.tail.getAllBodyElements()...)
+	}
+	return elements
+}
+
 func (e *BodyElement) getEndOfTail() *BodyElement {
 	if e.tail == nil {
 		return e

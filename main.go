@@ -11,7 +11,7 @@ import (
 
 var (
 	snake    *Snake
-	grow     int
+	grow     int = 100
 	tile     *ebiten.Image
 	img      *ebiten.Image
 	ops      = &ebiten.DrawImageOptions{}
@@ -19,7 +19,7 @@ var (
 )
 
 const (
-	elementSize = 10
+	elementSize = 5
 )
 
 func init() {
@@ -68,6 +68,13 @@ func (g *Game) Update() error {
 	}
 
 	snake.head.move(snake.head.p.move(snake.dir))
+
+	for _, e := range snake.head.getAllBodyElements()[1:] {
+		if e.p.x == snake.head.p.x && e.p.y == snake.head.p.y {
+			log.Fatal("Game Over")
+		}
+	}
+
 	return nil
 }
 
@@ -79,17 +86,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			screen.DrawImage(tile, ops)
 		}
 	}*/
-	currentElement := snake.head
-	for {
+
+	for _, e := range snake.head.getAllBodyElements() {
 		ops.GeoM.Reset()
-		ops.GeoM.Translate(float64(currentElement.p.x), float64(currentElement.p.y))
+		ops.GeoM.Translate(float64(e.p.x), float64(e.p.y))
 		screen.DrawImage(img, ops)
-		if currentElement.tail == nil {
-			break
-		}
-		currentElement = currentElement.tail
 	}
-	
+
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
