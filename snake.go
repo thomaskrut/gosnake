@@ -6,7 +6,7 @@ type Snake struct {
 }
 
 type BodyElement struct {
-	x, y int
+	p   *Point
 	tail *BodyElement
 }
 
@@ -17,8 +17,12 @@ func (e *BodyElement) getEndOfTail() *BodyElement {
 	return e.tail.getEndOfTail()
 }
 
-func (e *BodyElement) move() {
-	
+func (e *BodyElement) move(p Point) {
+	previous := *e.p
+	e.p = &p
+	if e.tail != nil {
+		e.tail.move(previous)
+	}
 }
 
 func newSnake() *Snake {
@@ -27,6 +31,6 @@ func newSnake() *Snake {
 }
 
 func newBodyElement(startX, startY int) *BodyElement {
-	newElement := &BodyElement{x: startX, y: startY}
+	newElement := &BodyElement{p: newPoint(startX, startY), tail: nil}
 	return newElement
 }

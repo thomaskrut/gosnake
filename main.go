@@ -5,15 +5,16 @@ import (
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	_"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	_ "github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 var (
-	snake *Snake
-	grow int
-	tile *ebiten.Image
-	img *ebiten.Image
-	ops = &ebiten.DrawImageOptions{}
+	snake    *Snake
+	grow     int
+	tile     *ebiten.Image
+	img      *ebiten.Image
+	ops      = &ebiten.DrawImageOptions{}
 	dirQueue DirectionQueue
 )
 
@@ -25,21 +26,29 @@ func init() {
 	snake = newSnake()
 	img = ebiten.NewImage(elementSize, elementSize)
 	img.Fill(color.White)
-	tile = ebiten.NewImage(elementSize - 1, elementSize -1)
-	tile.Fill(color.RGBA{120,120,120,120})
+	tile = ebiten.NewImage(elementSize-1, elementSize-1)
+	tile.Fill(color.RGBA{120, 120, 120, 12})
 }
 
-func keys() (Direction, bool) {
-	if ebiten.IsKeyPressed(ebiten.KeyUp) {
-		return North, true
-	} else if ebiten.IsKeyPressed(ebiten.KeyDown) {
-		return South, true
-	} else if ebiten.IsKeyPressed(ebiten.KeyLeft) {
-		return West, true
-	} else if ebiten.IsKeyPressed(ebiten.KeyRight) {
-		return East, true
+func checkKeys() {
+	if inpututil.IsKeyJustPressed(ebiten.KeyUp) && snake.dir != South {
+		dirQueue.push(North)
 	}
-	return None, false
+
+	if inpututil.IsKeyJustPressed(ebiten.KeyDown) && snake.dir != North {
+		dirQueue.push(South)
+	}
+
+	if inpututil.IsKeyJustPressed(ebiten.KeyLeft) && snake.dir != East {
+		dirQueue.push(West)
+	}
+
+	if inpututil.IsKeyJustPressed(ebiten.KeyRight) && snake.dir != West {
+		dirQueue.push(East)
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+		grow+=10
+	}
 }
 
 type Game struct {
@@ -47,36 +56,40 @@ type Game struct {
 
 func (g *Game) Update() error {
 
-	if newDir, ok := keys(); ok {
-		dirQueue.push(newDir)
-	}
+	checkKeys()
 
 	if grow > 0 {
 		grow--
-		tail := snake.head.getEndOfTail()
-		tail.tail = newBodyElement(tail.x, tail.y)
+		snake.head.getEndOfTail().tail = newBodyElement(snake.head.getEndOfTail().p.x, snake.head.getEndOfTail().p.y)
 	}
-	
-	if len(dirQueue) > 0 && snake.head.x % elementSize == 0 && snake.head.y % elementSize == 0 {
+
+	if len(dirQueue) > 0 && snake.head.p.x%elementSize == 0 && snake.head.p.y%elementSize == 0 {
 		snake.dir = dirQueue.pop()
 	}
 
-	snake.head.x += snake.dir.varX
-	snake.head.y += snake.dir.varY
+	snake.head.move(snake.head.p.move(snake.dir))
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	for x:=0; x<32; x++ {
-		for y:=0; y < 24; y++ {
+	/*for x := 0; x < 32; x++ {
+		for y := 0; y < 24; y++ {
 			ops.GeoM.Reset()
-			ops.GeoM.Translate(float64(x * elementSize), float64(y * elementSize))
+			ops.GeoM.Translate(float64(x*elementSize), float64(y*elementSize))
 			screen.DrawImage(tile, ops)
 		}
+	}*/
+	currentElement := snake.head
+	for {
+		ops.GeoM.Reset()
+		ops.GeoM.Translate(float64(currentElement.p.x), float64(currentElement.p.y))
+		screen.DrawImage(img, ops)
+		if currentElement.tail == nil {
+			break
+		}
+		currentElement = currentElement.tail
 	}
-	ops.GeoM.Reset()
-	ops.GeoM.Translate(float64(snake.head.x), float64(snake.head.y))
-	screen.DrawImage(img, ops)	
+	
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {

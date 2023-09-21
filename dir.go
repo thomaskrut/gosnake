@@ -1,11 +1,5 @@
 package main
 
-import (
-	"strconv"
-)
-
-
-
 var (
 	None      = Direction{varX: 0, varY: 0}
 	North     = Direction{varX: 0, varY: -1}
@@ -20,12 +14,8 @@ type Direction struct {
 
 type DirectionQueue []Direction
 
-func (q DirectionQueue) String() string {
-	str := ""
-	for _, dir := range q {
-		str += "(x:" + strconv.Itoa(dir.varX) + " y:" + strconv.Itoa(dir.varY) + ")" 
-	}
-	return str
+func (d Direction) isOpposite(dir Direction) bool {
+	return d.varX == -dir.varX && d.varY == -dir.varY
 }
 
 func (q *DirectionQueue) pop() Direction {
@@ -38,9 +28,5 @@ func (q *DirectionQueue) pop() Direction {
 }
 
 func (q *DirectionQueue) push(dir Direction) {
-	if (len(*q) > 0 && (*q)[len(*q)-1] != dir) || len(*q) == 0 {
-		
 		*q = append(*q, dir)
-
-}
 }
