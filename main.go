@@ -12,7 +12,7 @@ import (
 var (
 	snake    *Snake
 	food     *Food
-	grow     int = 40
+	grow     int
 	tileImg  *ebiten.Image
 	foodImg  *ebiten.Image
 	snakeImg *ebiten.Image
@@ -28,6 +28,7 @@ const (
 
 func init() {
 	setRandomSource(0)
+	grow = 40
 	snake = newSnake()
 	food = newFood()
 	snakeImg = ebiten.NewImage(elementSize, elementSize)
@@ -39,6 +40,7 @@ func init() {
 }
 
 func checkKeys() {
+	
 	if inpututil.IsKeyJustPressed(ebiten.KeyUp) && snake.dir != South {
 		dirQueue.push(North)
 	}
@@ -77,15 +79,19 @@ func (g *Game) Update() error {
 
 	snake.head.move(snake.head.p.move(snake.dir))
 
-	for _, e := range snake.head.getAllBodyElements()[1:] {
-		if e.p.x == snake.head.p.x && e.p.y == snake.head.p.y {
-			log.Fatal("Game Over")
-		}
-	}
+	if snake.head.p.x%elementSize == 0 && snake.head.p.y%elementSize == 0 {
 
-	if snake.head.p.x == food.p.x && snake.head.p.y == food.p.y {
-		food = newFood()
-		grow += 10
+		for _, e := range snake.head.getAllBodyElements()[1:] {
+			if e.p.x == snake.head.p.x && e.p.y == snake.head.p.y {
+				log.Fatal("Game Over")
+			}
+		}
+
+		if snake.head.p.x == food.p.x && snake.head.p.y == food.p.y {
+			food = newFood()
+			grow += 10
+		}
+
 	}
 
 	return nil
