@@ -14,6 +14,7 @@ var (
 	game     *Game
 	snake    *Snake
 	food     *Food
+	maze     *Maze
 	grow     int
 	tileImg  *ebiten.Image
 	foodImg  *ebiten.Image
@@ -34,6 +35,9 @@ func init() {
 	grow = 40
 	snake = newSnake()
 	food = newFood(*game)
+	maze = newMaze()
+	maze.addWall(newWall(*game, util.GetRandomPoint(game.screenWidth, game.screenHeight, game.elementSize), 10, util.East))
+	maze.addWall(newWall(*game, util.GetRandomPoint(game.screenWidth, game.screenHeight, game.elementSize), 15, util.South))
 	snakeImg = ebiten.NewImage(elementSize, elementSize)
 	snakeImg.Fill(color.RGBA{255, 255, 255, 255})
 	tileImg = ebiten.NewImage(elementSize, elementSize)
@@ -93,9 +97,15 @@ func (g *Game) Update() error {
 			}
 		}
 
-		if snake.head.getPoint().CollidesWith(*food.p) {
+		for _, p := range maze.getAllPoints() {
+			if p.CollidesWith(*snake.head.getPoint()) {
+				log.Fatal("Game Over")
+			}
+		}
+
+		if snake.head.getPoint().CollidesWith(food.p) {
 			food = newFood(*game)
-			grow += 10
+			grow += 20
 		}
 
 	}
@@ -109,6 +119,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		ops.GeoM.Reset()
 		ops.GeoM.Translate(e.p.GetX(), e.p.GetY())
 		screen.DrawImage(snakeImg, ops)
+	}
+
+	for _, p := range maze.getAllPoints() {
+		ops.GeoM.Reset()
+		ops.GeoM.Translate(p.GetX(), p.GetY())
+		screen.DrawImage(tileImg, ops)
 	}
 
 	ops.GeoM.Reset()

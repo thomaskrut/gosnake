@@ -12,8 +12,8 @@ func (p Point) GetY() float64 {
 	return float64(p.y)
 }
 
-func NewPoint(x, y int) *Point {
-	return &Point{x: x, y: y}
+func NewPoint(x, y int) Point {
+	return Point{x: x, y: y}
 }
 
 func (p Point) IsOnGrid(elementSize int) bool {
@@ -30,13 +30,17 @@ func (p Point) Move(dir Direction) Point {
 	return Point{x: x, y: y}
 }
 
-func GetRandomPoint(width, height, elementSize int) *Point {
+func GetRandomPoint(width, height, elementSize int) Point {
 	x := randomNumber(width)
 	y := randomNumber(height)
 	x = x - (x % elementSize)
 	y = y - (y % elementSize)
 
 	return NewPoint(x, y)
+}
+
+func (p Point) GetAdjecentPoint(dir Direction, elementSize int) Point {
+	return NewPoint(p.x + dir.varX * elementSize, p.y + dir.varY * elementSize)
 }
 
 

@@ -46,7 +46,7 @@ func (e *BodyElement) move(p util.Point) {
 }
 
 func newSnake() *Snake {
-	newSnake := Snake{head: newBodyElement(*util.NewPoint(0, 0)), dir: util.East}
+	newSnake := Snake{head: newBodyElement(util.NewPoint(0, 0)), dir: util.East}
 	return &newSnake
 }
 

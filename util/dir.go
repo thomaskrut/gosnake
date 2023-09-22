@@ -18,6 +18,22 @@ func (d Direction) isOpposite(dir Direction) bool {
 	return d.varX == -dir.varX && d.varY == -dir.varY
 }
 
+func getRandomDirection() Direction {
+	random := randomNumber(4)
+	switch random {
+	case 0:
+		return North
+	case 1:
+		return South
+	case 2:
+		return East
+	case 3:
+		return West
+	default:
+		return None
+	}
+}
+
 func (q *DirectionQueue) Pop() Direction {
 	if len(*q) == 0 {
 		return None

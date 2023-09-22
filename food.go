@@ -5,7 +5,7 @@ import (
 )
 
 type Food struct {
-	p *util.Point
+	p util.Point
 }
 
 func newFood(game Game) *Food {
