@@ -3,6 +3,7 @@ package main
 import (
 	"image/color"
 	"log"
+	"strconv"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	_ "github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -11,16 +12,20 @@ import (
 )
 
 var (
-	game     *Game
-	snake    *Snake
-	food     *Food
-	maze     *Maze
-	grow     int
-	tileImg  *ebiten.Image
-	foodImg  *ebiten.Image
-	snakeImg *ebiten.Image
-	ops      = &ebiten.DrawImageOptions{}
-	dirQueue util.DirectionQueue
+	game         *Game
+	snake        *Snake
+	food         *Food
+	maze         *Maze
+	grow         int
+	foodCounter  int
+	maxFood      int
+	currentLevel int
+	tileImg      *ebiten.Image
+	foodImg      *ebiten.Image
+	snakeImg     *ebiten.Image
+	foodMeterImg *ebiten.Image
+	ops          = &ebiten.DrawImageOptions{}
+	dirQueue     util.DirectionQueue
 )
 
 const (
@@ -32,18 +37,26 @@ const (
 func init() {
 	game = &Game{elementSize: elementSize, screenWidth: screenWidth, screenHeight: screenHeight}
 	util.SetRandomSource(0)
-	grow = 40
-	snake = newSnake()
-	food = newFood(*game)
-	maze = newMaze()
-	maze.addWall(newWall(*game, util.GetRandomPoint(game.screenWidth, game.screenHeight, game.elementSize), 10, util.East))
-	maze.addWall(newWall(*game, util.GetRandomPoint(game.screenWidth, game.screenHeight, game.elementSize), 15, util.South))
+	currentLevel = 1
+	newLevel()
 	snakeImg = ebiten.NewImage(elementSize, elementSize)
-	snakeImg.Fill(color.RGBA{255, 255, 255, 255})
+	snakeImg.Fill(color.RGBA{0, 255, 0, 255})
 	tileImg = ebiten.NewImage(elementSize, elementSize)
-	tileImg.Fill(color.RGBA{120, 120, 120, 12})
+	tileImg.Fill(color.RGBA{120, 120, 120, 255})
 	foodImg = ebiten.NewImage(elementSize, elementSize)
 	foodImg.Fill(color.RGBA{255, 0, 0, 255})
+	foodMeterImg = ebiten.NewImage(elementSize, elementSize)
+
+}
+
+func newLevel() {
+	grow = 40
+	foodCounter = 0
+	maxFood = 10
+	snake = newSnake()
+	maze = newMaze(game)
+	maze.loadFromFile(strconv.Itoa(currentLevel))
+	food = newFood(game, snake.getAllPoints(), maze.getAllPoints())
 }
 
 func checkKeys() {
@@ -104,7 +117,12 @@ func (g *Game) Update() error {
 		}
 
 		if snake.head.getPoint().CollidesWith(food.p) {
-			food = newFood(*game)
+			food = newFood(game, snake.getAllPoints(), maze.getAllPoints())
+			foodCounter++
+			if foodCounter == maxFood {
+				currentLevel++
+				newLevel()
+			}
 			grow += 20
 		}
 
@@ -115,21 +133,38 @@ func (g *Game) Update() error {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 
+	//Snake
 	for _, e := range snake.head.getAllBodyElements() {
 		ops.GeoM.Reset()
 		ops.GeoM.Translate(e.p.GetX(), e.p.GetY())
 		screen.DrawImage(snakeImg, ops)
 	}
 
+	//Maze
 	for _, p := range maze.getAllPoints() {
 		ops.GeoM.Reset()
 		ops.GeoM.Translate(p.GetX(), p.GetY())
 		screen.DrawImage(tileImg, ops)
 	}
 
+	//Food
 	ops.GeoM.Reset()
 	ops.GeoM.Translate(food.p.GetX(), food.p.GetY())
 	screen.DrawImage(foodImg, ops)
+
+	//Food meter
+	for i := 0; i < foodCounter; i++ {
+		ops.GeoM.Reset()
+		ops.GeoM.Translate(float64(10+i*g.elementSize), 10)
+		foodMeterImg.Fill(color.RGBA{255, 0, 0, 255})
+		screen.DrawImage(foodMeterImg, ops)
+	}
+	for i := foodCounter; i < maxFood; i++ {
+		ops.GeoM.Reset()
+		ops.GeoM.Translate(float64(10+i*g.elementSize), 10)
+		foodMeterImg.Fill(color.RGBA{100, 0, 0, 255})
+		screen.DrawImage(foodMeterImg, ops)
+	}
 
 }
 

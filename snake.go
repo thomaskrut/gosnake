@@ -14,6 +14,16 @@ type BodyElement struct {
 	tail *BodyElement
 }
 
+func (s Snake) getAllPoints() []util.Point {
+	body := s.head.getAllBodyElements()
+	points := make([]util.Point, len(body))
+	for i, element := range body {
+		points[i] = *element.p
+	}
+	return points
+	
+}
+
 func (e BodyElement) getPoint() *util.Point {
 	return e.p
 }
@@ -46,7 +56,7 @@ func (e *BodyElement) move(p util.Point) {
 }
 
 func newSnake() *Snake {
-	newSnake := Snake{head: newBodyElement(util.NewPoint(0, 0)), dir: util.East}
+	newSnake := Snake{head: newBodyElement(util.NewPoint(10, 10)), dir: util.East}
 	return &newSnake
 }
 

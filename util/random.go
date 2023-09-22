@@ -17,6 +17,6 @@ func SetRandomSource(seed int) {
 	}
 }
 
-func randomNumber(size int) int {
+func RandomNumber(size int) int {
 	return rand.New(source).Intn(size)
 }

@@ -8,7 +8,7 @@ type Food struct {
 	p util.Point
 }
 
-func newFood(game Game) *Food {
-	newFood := Food{p: util.GetRandomPoint(game.screenWidth, game.screenHeight, game.elementSize)}
+func newFood(game *Game, points ...[]util.Point) *Food {
+	newFood := Food{p: util.GetRandomEmptyPoint(game.screenWidth, game.screenHeight, game.elementSize, points)}
 	return &newFood
 }
