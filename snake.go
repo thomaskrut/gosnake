@@ -1,13 +1,21 @@
 package main
 
+import (
+	"github.com/thomaskrut/gosnake/util"
+)
+
 type Snake struct {
 	head *BodyElement
-	dir Direction
+	dir  util.Direction
 }
 
 type BodyElement struct {
-	p   *Point
+	p    *util.Point
 	tail *BodyElement
+}
+
+func (e BodyElement) getPoint() *util.Point {
+	return e.p
 }
 
 func (e BodyElement) getAllBodyElements() []*BodyElement {
@@ -25,7 +33,11 @@ func (e *BodyElement) getEndOfTail() *BodyElement {
 	return e.tail.getEndOfTail()
 }
 
-func (e *BodyElement) move(p Point) {
+func (e *BodyElement) append(element *BodyElement) {
+	e.tail = element
+}
+
+func (e *BodyElement) move(p util.Point) {
 	previous := *e.p
 	e.p = &p
 	if e.tail != nil {
@@ -34,11 +46,11 @@ func (e *BodyElement) move(p Point) {
 }
 
 func newSnake() *Snake {
-	newSnake := Snake{head: newBodyElement(0, 0), dir: East}
+	newSnake := Snake{head: newBodyElement(*util.NewPoint(0, 0)), dir: util.East}
 	return &newSnake
 }
 
-func newBodyElement(startX, startY int) *BodyElement {
-	newElement := &BodyElement{p: newPoint(startX, startY), tail: nil}
+func newBodyElement(p util.Point) *BodyElement {
+	newElement := &BodyElement{p: &p, tail: nil}
 	return newElement
 }

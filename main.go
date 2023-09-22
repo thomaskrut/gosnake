@@ -7,9 +7,11 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	_ "github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"github.com/thomaskrut/gosnake/util"
 )
 
 var (
+	game     *Game
 	snake    *Snake
 	food     *Food
 	grow     int
@@ -17,7 +19,7 @@ var (
 	foodImg  *ebiten.Image
 	snakeImg *ebiten.Image
 	ops      = &ebiten.DrawImageOptions{}
-	dirQueue DirectionQueue
+	dirQueue util.DirectionQueue
 )
 
 const (
@@ -27,10 +29,11 @@ const (
 )
 
 func init() {
-	setRandomSource(0)
+	game = &Game{elementSize: elementSize, screenWidth: screenWidth, screenHeight: screenHeight}
+	util.SetRandomSource(0)
 	grow = 40
 	snake = newSnake()
-	food = newFood()
+	food = newFood(*game)
 	snakeImg = ebiten.NewImage(elementSize, elementSize)
 	snakeImg.Fill(color.RGBA{255, 255, 255, 255})
 	tileImg = ebiten.NewImage(elementSize, elementSize)
@@ -40,21 +43,21 @@ func init() {
 }
 
 func checkKeys() {
-	
-	if inpututil.IsKeyJustPressed(ebiten.KeyUp) && snake.dir != South {
-		dirQueue.push(North)
+
+	if inpututil.IsKeyJustPressed(ebiten.KeyUp) && snake.dir != util.South {
+		dirQueue.Push(util.North)
 	}
 
-	if inpututil.IsKeyJustPressed(ebiten.KeyDown) && snake.dir != North {
-		dirQueue.push(South)
+	if inpututil.IsKeyJustPressed(ebiten.KeyDown) && snake.dir != util.North {
+		dirQueue.Push(util.South)
 	}
 
-	if inpututil.IsKeyJustPressed(ebiten.KeyLeft) && snake.dir != East {
-		dirQueue.push(West)
+	if inpututil.IsKeyJustPressed(ebiten.KeyLeft) && snake.dir != util.East {
+		dirQueue.Push(util.West)
 	}
 
-	if inpututil.IsKeyJustPressed(ebiten.KeyRight) && snake.dir != West {
-		dirQueue.push(East)
+	if inpututil.IsKeyJustPressed(ebiten.KeyRight) && snake.dir != util.West {
+		dirQueue.Push(util.East)
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 		grow += 10
@@ -62,6 +65,9 @@ func checkKeys() {
 }
 
 type Game struct {
+	elementSize  int
+	screenWidth  int
+	screenHeight int
 }
 
 func (g *Game) Update() error {
@@ -70,25 +76,25 @@ func (g *Game) Update() error {
 
 	if grow > 0 {
 		grow--
-		snake.head.getEndOfTail().tail = newBodyElement(snake.head.getEndOfTail().p.x, snake.head.getEndOfTail().p.y)
+		snake.head.getEndOfTail().append(newBodyElement(*snake.head.getEndOfTail().getPoint()))
 	}
 
-	if len(dirQueue) > 0 && snake.head.p.x%elementSize == 0 && snake.head.p.y%elementSize == 0 {
-		snake.dir = dirQueue.pop()
+	if len(dirQueue) > 0 && snake.head.getPoint().IsOnGrid(elementSize) {
+		snake.dir = dirQueue.Pop()
 	}
 
-	snake.head.move(snake.head.p.move(snake.dir))
+	snake.head.move(snake.head.getPoint().Move(snake.dir))
 
-	if snake.head.p.x%elementSize == 0 && snake.head.p.y%elementSize == 0 {
+	if snake.head.getPoint().IsOnGrid(elementSize) {
 
 		for _, e := range snake.head.getAllBodyElements()[1:] {
-			if e.p.x == snake.head.p.x && e.p.y == snake.head.p.y {
+			if e.getPoint().CollidesWith(*snake.head.getPoint()) {
 				log.Fatal("Game Over")
 			}
 		}
 
-		if snake.head.p.x == food.p.x && snake.head.p.y == food.p.y {
-			food = newFood()
+		if snake.head.getPoint().CollidesWith(*food.p) {
+			food = newFood(*game)
 			grow += 10
 		}
 
@@ -101,12 +107,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	for _, e := range snake.head.getAllBodyElements() {
 		ops.GeoM.Reset()
-		ops.GeoM.Translate(float64(e.p.x), float64(e.p.y))
+		ops.GeoM.Translate(e.p.GetX(), e.p.GetY())
 		screen.DrawImage(snakeImg, ops)
 	}
 
 	ops.GeoM.Reset()
-	ops.GeoM.Translate(float64(food.p.x), float64(food.p.y))
+	ops.GeoM.Translate(food.p.GetX(), food.p.GetY())
 	screen.DrawImage(foodImg, ops)
 
 }
@@ -116,9 +122,10 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (sw, sh int) {
 }
 
 func main() {
+
 	ebiten.SetWindowSize(640, 480)
 	ebiten.SetWindowTitle("Gosnake")
-	if err := ebiten.RunGame(&Game{}); err != nil {
+	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}
 }
