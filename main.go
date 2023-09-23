@@ -51,12 +51,14 @@ func init() {
 }
 
 func (g Game) newLevel() {
-	grow = 40
+	
 	foodCounter = 0
 	maxFood = 4
-	snake = newSnake()
+	
 	maze = newMaze(game)
 	maze.loadFromFile(strconv.Itoa(currentLevel))
+	snake = newSnake(maze.snakePos, maze.snakeDir)
+	grow = maze.snakeLen
 	food = newFood(game, snake, maze)
 }
 
@@ -89,47 +91,45 @@ type Game struct {
 }
 
 func (g *Game) Update() error {
-
 	checkKeys()
-
 	if grow > 0 {
 		grow--
 		snake.tail().grow()
 	}
-
 	if len(dirQueue) > 0 && snake.head.point().IsOnGrid(elementSize) {
 		snake.dir = dirQueue.Pop()
 	}
-
 	snake.head.move(snake.head.point().Move(snake.dir))
-
 	if snake.head.isOnGrid() {
-
-		for _, e := range snake.head.body()[1:] {
-			if e.point().Overlaps(*snake.head.point()) {
-				log.Fatal("Game Over")
-			}
-		}
-
-		for _, p := range maze.Points() {
-			if p.Overlaps(*snake.head.point()) {
-				log.Fatal("Game Over")
-			}
-		}
-
-		if snake.head.point().Overlaps(food.p) {
-			food = newFood(game, snake, maze)
-			foodCounter++
-			if foodCounter == maxFood {
-				currentLevel++
-				game.newLevel()
-			}
-			grow += 20
-		}
-
+		checkCollisions()
+		checkFood()
 	}
-
 	return nil
+}
+
+func checkCollisions() {
+	for _, e := range snake.head.body()[1:] {
+		if e.point().Overlaps(*snake.head.point()) {
+			log.Fatal("Game Over")
+		}
+	}
+	for _, p := range maze.Points() {
+		if p.Overlaps(*snake.head.point()) {
+			log.Fatal("Game Over")
+		}
+	}
+}
+
+func checkFood() {
+	if snake.head.point().Overlaps(food.p) {
+		food = newFood(game, snake, maze)
+		foodCounter++
+		if foodCounter == maxFood {
+			currentLevel++
+			game.newLevel()
+		}
+		grow += 20
+	}
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
@@ -153,17 +153,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	ops.GeoM.Translate(food.p.GetX(), food.p.GetY())
 	screen.DrawImage(foodImg, ops)
 
-	//Food meter
-	for i := 0; i < foodCounter; i++ {
+	// Food meter
+	for i := 0; i < maxFood; i++ {
 		ops.GeoM.Reset()
 		ops.GeoM.Translate(float64(10+i*g.elementSize), 10)
-		foodMeterImg.Fill(color.RGBA{255, 0, 0, 255})
-		screen.DrawImage(foodMeterImg, ops)
-	}
-	for i := foodCounter; i < maxFood; i++ {
-		ops.GeoM.Reset()
-		ops.GeoM.Translate(float64(10+i*g.elementSize), 10)
-		foodMeterImg.Fill(color.RGBA{100, 0, 0, 255})
+		if i < foodCounter {
+			foodMeterImg.Fill(color.RGBA{255, 0, 0, 255})
+		} else {
+			foodMeterImg.Fill(color.RGBA{100, 0, 0, 255})
+		}
 		screen.DrawImage(foodMeterImg, ops)
 	}
 
@@ -177,6 +175,8 @@ func main() {
 
 	ebiten.SetWindowSize(640, 480)
 	ebiten.SetWindowTitle("Gosnake")
+	ebiten.SetWindowDecorated(false)
+	
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}

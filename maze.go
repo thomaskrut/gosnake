@@ -7,8 +7,12 @@ import (
 )
 
 type Maze struct {
-	walls []*Wall
-	game  *Game
+	walls    []*Wall
+	game     *Game
+	snakePos util.Point
+	snakeLen int
+	snakeDir util.Direction
+	maxFood int
 }
 
 type Wall struct {
@@ -25,7 +29,37 @@ func (m *Maze) addRandomWall() {
 
 func (m *Maze) loadFromFile(level string) {
 	data := util.ReadCsv("levels/" + level + ".lvl")
-	for _, row := range data {
+
+	for index, row := range data {
+
+		if index == 0 {
+			snakeX, err := strconv.Atoi(row[0])
+			if err != nil {
+				panic("Invalid snake x coordinate")
+			}
+
+			snakeY, err := strconv.Atoi(row[1])
+			if err != nil {
+				panic("Invalid snake y coordinate")
+			}
+
+			m.snakePos = util.NewPoint(snakeX*game.elementSize, snakeY*game.elementSize)
+
+			m.snakeLen, err = strconv.Atoi(row[2])
+			if err != nil {
+				panic("Invalid snake length")
+			}
+
+			m.snakeDir, err = util.GetDirFromString(row[3])
+			if err != nil {
+				panic("Invalid snake direction")
+			}
+
+			
+
+			continue
+		}
+
 		if len(row) != 4 {
 			panic("Invalid level file")
 		}
