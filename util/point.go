@@ -1,9 +1,11 @@
 package util
 
-
-
 type Point struct {
 	x, y int
+}
+
+type Points interface {
+	Points() []Point
 }
 
 func (p Point) GetX() float64 {
@@ -22,7 +24,7 @@ func (p Point) IsOnGrid(elementSize int) bool {
 	return p.x%elementSize == 0 && p.y%elementSize == 0
 }
 
-func (p Point) CollidesWith(other Point) bool {
+func (p Point) Overlaps(other Point) bool {
 	return p.x == other.x && p.y == other.y
 }
 
@@ -32,7 +34,7 @@ func (p Point) Move(dir Direction) Point {
 	return Point{x: x, y: y}
 }
 
-func GetRandomPoint(width, height, elementSize int) Point {
+func RandPoint(width, height, elementSize int) Point {
 	x := RandomNumber(width)
 	y := RandomNumber(height)
 	x = x - (x % elementSize)
@@ -41,17 +43,17 @@ func GetRandomPoint(width, height, elementSize int) Point {
 	return NewPoint(x, y)
 }
 
-func GetRandomEmptyPoint(width, height, elementSize int, points [][]Point) Point {
-	p := GetRandomPoint(width, height, elementSize)
+func EmptyRandPoint(width, height, elementSize int, points []Points) Point {
+	p := RandPoint(width, height, elementSize)
 	for _, pointList := range points {
-		for _, point := range pointList {
-			if p.CollidesWith(point) {
-				return GetRandomEmptyPoint(width, height, elementSize, points)
+		for _, point := range pointList.Points() {
+			if p.Overlaps(point) {
+				return EmptyRandPoint(width, height, elementSize, points)
 			}
 		}
 	}
 	return p
-	
+
 }
 
 func (p Point) GetAdjecentPoint(dir Direction, elementSize int) Point {

@@ -24,7 +24,7 @@ var (
 	foodImg      *ebiten.Image
 	snakeImg     *ebiten.Image
 	foodMeterImg *ebiten.Image
-	ops          = &ebiten.DrawImageOptions{}
+	ops          *ebiten.DrawImageOptions
 	dirQueue     util.DirectionQueue
 )
 
@@ -38,7 +38,8 @@ func init() {
 	game = &Game{elementSize: elementSize, screenWidth: screenWidth, screenHeight: screenHeight}
 	util.SetRandomSource(0)
 	currentLevel = 1
-	newLevel()
+	game.newLevel()
+	ops = &ebiten.DrawImageOptions{}
 	snakeImg = ebiten.NewImage(elementSize, elementSize)
 	snakeImg.Fill(color.RGBA{0, 255, 0, 255})
 	tileImg = ebiten.NewImage(elementSize, elementSize)
@@ -49,14 +50,14 @@ func init() {
 
 }
 
-func newLevel() {
+func (g Game) newLevel() {
 	grow = 40
 	foodCounter = 0
-	maxFood = 10
+	maxFood = 4
 	snake = newSnake()
 	maze = newMaze(game)
 	maze.loadFromFile(strconv.Itoa(currentLevel))
-	food = newFood(game, snake.getAllPoints(), maze.getAllPoints())
+	food = newFood(game, snake, maze)
 }
 
 func checkKeys() {
@@ -93,35 +94,35 @@ func (g *Game) Update() error {
 
 	if grow > 0 {
 		grow--
-		snake.head.getEndOfTail().append(newBodyElement(*snake.head.getEndOfTail().getPoint()))
+		snake.tail().grow()
 	}
 
-	if len(dirQueue) > 0 && snake.head.getPoint().IsOnGrid(elementSize) {
+	if len(dirQueue) > 0 && snake.head.point().IsOnGrid(elementSize) {
 		snake.dir = dirQueue.Pop()
 	}
 
-	snake.head.move(snake.head.getPoint().Move(snake.dir))
+	snake.head.move(snake.head.point().Move(snake.dir))
 
-	if snake.head.getPoint().IsOnGrid(elementSize) {
+	if snake.head.isOnGrid() {
 
-		for _, e := range snake.head.getAllBodyElements()[1:] {
-			if e.getPoint().CollidesWith(*snake.head.getPoint()) {
+		for _, e := range snake.head.body()[1:] {
+			if e.point().Overlaps(*snake.head.point()) {
 				log.Fatal("Game Over")
 			}
 		}
 
-		for _, p := range maze.getAllPoints() {
-			if p.CollidesWith(*snake.head.getPoint()) {
+		for _, p := range maze.Points() {
+			if p.Overlaps(*snake.head.point()) {
 				log.Fatal("Game Over")
 			}
 		}
 
-		if snake.head.getPoint().CollidesWith(food.p) {
-			food = newFood(game, snake.getAllPoints(), maze.getAllPoints())
+		if snake.head.point().Overlaps(food.p) {
+			food = newFood(game, snake, maze)
 			foodCounter++
 			if foodCounter == maxFood {
 				currentLevel++
-				newLevel()
+				game.newLevel()
 			}
 			grow += 20
 		}
@@ -134,14 +135,14 @@ func (g *Game) Update() error {
 func (g *Game) Draw(screen *ebiten.Image) {
 
 	//Snake
-	for _, e := range snake.head.getAllBodyElements() {
+	for _, e := range snake.head.body() {
 		ops.GeoM.Reset()
 		ops.GeoM.Translate(e.p.GetX(), e.p.GetY())
 		screen.DrawImage(snakeImg, ops)
 	}
 
 	//Maze
-	for _, p := range maze.getAllPoints() {
+	for _, p := range maze.Points() {
 		ops.GeoM.Reset()
 		ops.GeoM.Translate(p.GetX(), p.GetY())
 		screen.DrawImage(tileImg, ops)

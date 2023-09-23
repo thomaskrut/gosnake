@@ -20,7 +20,7 @@ func (m *Maze) addWall(wall *Wall) {
 }
 
 func (m *Maze) addRandomWall() {
-	m.addWall(newWall(*m.game, util.GetRandomPoint(m.game.screenWidth, m.game.screenHeight, m.game.elementSize), util.RandomNumber(10), util.GetRandomDirection()))
+	m.addWall(newWall(*m.game, util.RandPoint(m.game.screenWidth, m.game.screenHeight, m.game.elementSize), util.RandomNumber(10), util.GetRandomDirection()))
 }
 
 func (m *Maze) loadFromFile(level string) {
@@ -44,7 +44,7 @@ func (m *Maze) loadFromFile(level string) {
 		if err != nil {
 			panic("Invalid length")
 		}
-		
+
 		dir, err := util.GetDirFromString(row[3])
 		if err != nil {
 			panic("Invalid direction")
@@ -54,7 +54,7 @@ func (m *Maze) loadFromFile(level string) {
 	}
 }
 
-func (m Maze) getAllPoints() []util.Point {
+func (m Maze) Points() []util.Point {
 	points := make([]util.Point, 0)
 	for _, wall := range m.walls {
 		points = append(points, wall.getPoints()...)

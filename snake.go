@@ -14,26 +14,38 @@ type BodyElement struct {
 	tail *BodyElement
 }
 
-func (s Snake) getAllPoints() []util.Point {
-	body := s.head.getAllBodyElements()
+func (s Snake) Points() []util.Point {
+	body := s.head.body()
 	points := make([]util.Point, len(body))
 	for i, element := range body {
 		points[i] = *element.p
 	}
 	return points
-	
+
 }
 
-func (e BodyElement) getPoint() *util.Point {
+func (e BodyElement) point() *util.Point {
 	return e.p
 }
 
-func (e BodyElement) getAllBodyElements() []*BodyElement {
+func (e BodyElement) body() []*BodyElement {
 	elements := []*BodyElement{&e}
 	if e.tail != nil {
-		elements = append(elements, e.tail.getAllBodyElements()...)
+		elements = append(elements, e.tail.body()...)
 	}
 	return elements
+}
+
+func (s Snake) tail() *BodyElement {
+	return s.head.getEndOfTail()
+}
+
+func (e *BodyElement) grow() {
+	e.tail = newBodyElement(*e.point())
+}
+
+func (e BodyElement) isOnGrid() bool {
+	return e.point().IsOnGrid(elementSize)
 }
 
 func (e *BodyElement) getEndOfTail() *BodyElement {
@@ -41,10 +53,6 @@ func (e *BodyElement) getEndOfTail() *BodyElement {
 		return e
 	}
 	return e.tail.getEndOfTail()
-}
-
-func (e *BodyElement) append(element *BodyElement) {
-	e.tail = element
 }
 
 func (e *BodyElement) move(p util.Point) {
